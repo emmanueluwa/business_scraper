@@ -1,10 +1,19 @@
-const puppeteer = require("puppeteer");
-
 //hit gooogle business page
 //enter search
 //get businesses
 // --- Business: name, address, category, number, review_count, review_avg
 //save the output to a file
+
+const puppeteer = require("puppeteer");
+
+// to avoid rate limiting, act liek a real person and add pauses
+const timeout = (miliseconds) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, miliseconds);
+  });
+};
 
 // function expression(= e.g math, going into a var)
 //executed in parsing of language, line by line,
@@ -40,15 +49,46 @@ async function run() {
 
   await page.waitForSelector(".rgnuSb.xYjf2e");
 
-  const businessTextCollection = await page.evaluate(() => {
-    return Array.from(document.querySelectorAll(".rgnuSb.xYjf2e")).map(
+  const businessLinks = await page.evaluate(() => {
+    return Array.from(document.querySelectorAll(".data-profile-url-path")).map(
       (title) => title.innerText
     );
   });
 
-  console.log(businessTextCollection);
+  console.log(businessLinks);
 
+  const businessData = [];
+
+  for (let businessLink of businessLinks) {
+    await Promise.all([page.click(businessLink)]);
+
+    await page.waitForSelector(".rgnuSb.tZPcob");
+
+    const businessDataItem = await page.evaluate(() => {
+      const name = document.querySelector(".rgnuSb.tZPcob").innerText;
+
+      const categories = document.querySelector(".AQrsxc").innerText;
+
+      const number = document.querySelector(".eigqqc").innerText;
+
+      return {
+        name,
+        categories,
+        number,
+      };
+    });
+
+    businessData.push(businessDataItem);
+  }
+
+  console.log("businessData: ", businessData);
   //click link to go on each bussiness, get rating and reviews
+
+  // businessDataItem {
+  //   businessName: "",
+  //   categories: [],
+  //   number: ""
+  // }
 }
 
 run();
