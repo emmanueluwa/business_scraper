@@ -2,3 +2,4 @@
 - install packages needed
 - setup file structure
 - map out classes/functions needed
+- build frontend to take input

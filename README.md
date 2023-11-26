@@ -14,3 +14,4 @@
 ## What technologies/tools will be used?
 
 - Puppeteer
+- Transformers for something (Language Modelling)
