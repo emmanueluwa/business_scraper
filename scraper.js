@@ -4,6 +4,7 @@
 // --- Business: name, address, category, number, review_count, review_avg
 //save the output to a file
 
+const fs = require("fs");
 const puppeteer = require("puppeteer");
 
 // to avoid rate limiting, act liek a real person and add pauses
@@ -30,12 +31,7 @@ const setupBrowser = async () => {
   return [browser, page];
 };
 
-// function declaration
-// hoisted -> can be used before it is declared, helpful since js is a language for the web
-// ---- ---- -functions usually created to be added to html and onClick() events
-async function run() {
-  const searchQuery = "holistic vet da5 2jq";
-
+const getBusinessData = async (searchQuery) => {
   //click business button
   const isElementVisible = async (page, classSelecetor) => {
     let visible = true;
@@ -54,45 +50,23 @@ async function run() {
   // consent form handling click "Accept all"
   await page.waitForSelector("#L2AGLb");
   await page.click("#L2AGLb", { delay: 1000 });
-  // const rejectAllButton = page.evaluate(() => {
-  //   return document.querySelector(".QS5gu.sy4vM");
-  // });
 
-  // let rejectAllVisible = await isElementVisible(page, rejectAllButton);
-  // while (rejectAllVisible) {
-  //   await page.click(rejectAllButton).catch(() => {});
-  //   loadMoreVisible = await isElementVisible(page, rejectAllButton);
-  // }
-
-  // await page.waitForSelector('textarea[name="q"]', { visible: true });
   await page.type('textarea[name="q"]', searchQuery);
-
-  await page.screenshot({ path: "ooter1.png" });
 
   await Promise.all([
     page.waitForNavigation({ waitUntil: "domcontentloaded" }),
     page.keyboard.press("Enter"),
   ]);
 
-  await page.screenshot({ path: "ooter2.png" });
-
   await page.waitForSelector(".CHn7Qb.pYouzb");
   const moreBusinessesGoogleLink = await page.evaluate(() => {
     return document.querySelector(".CHn7Qb.pYouzb").href;
   });
 
-  // let loadMoreVisible = await isElementVisible(page, moreBusinessesGoogleLink);
-  // while (loadMoreVisible) {
-  //   await page.goto(moreBusinessesGoogleLink, { delay: 1000 });
-  //   loadMoreVisible = await isElementVisible(page, moreBusinessesGoogleLink);
-  // }
-
+  //load more businesses
   await page.goto(moreBusinessesGoogleLink);
 
   //clicking each business name to get each business detail section
-  // const businessDetailLink = page.evaluate(() => {
-  //   return document.querySelector(".rgnuSb.xYjf2e");
-  // });
 
   //wait for all the business listings to load
   await page.waitForSelector("div[data-profile-url-path]");
@@ -105,17 +79,11 @@ async function run() {
       );
     }
   );
-  // const businessLinks = await page.evaluate(() => {
-  //   console.log("got here 4");
-
-  //   return Array.from(document.querySelectorAll("div[data-profile-url-path]")).map(
-  //     (title) => title
-  //   );
-  // });
 
   const businessData = [];
 
   for (let businessLink of businessLinks) {
+    console.log("Going to:", businessLink);
     const businessPage = `https://www.google.com${businessLink}`;
 
     await page.goto(businessPage, { waitUntil: "domcontentloaded" });
@@ -148,20 +116,29 @@ async function run() {
     });
 
     businessData.push(businessDataItem);
-    await sleep(1000);
+    await sleep(1000); // TODO: ADD randomisation on timeouts
   }
 
-  console.log("businessData: ", businessData);
+  console.log("businessData count: ", businessData.length);
   //click link to go on each bussiness, get rating and reviews
 
-  // businessDataItem {
-  //   businessName: "",
-  //   review count/avg: "",
-  //   categories: [],
-  //   number: "",
-  //   address: "",
+  fs.writeFileSync(
+    "scraped-business-data.json",
+    JSON.stringify(businessData),
+    "utf-8"
+  );
+  return true;
+};
 
-  // }
+// function declaration
+// hoisted -> can be used before it is declared, helpful since js is a language for the web
+// ---- ---- -functions usually created to be added to html and onClick() events
+async function run() {
+  const searchQuery = "holistic vet da5 2jq";
+
+  getBusinessData(searchQuery);
+
+  return true;
 }
 
 run();
