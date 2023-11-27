@@ -50,7 +50,6 @@ async function run() {
   const [browser, page] = await setupBrowser();
 
   await page.goto("https://www.google.com/", { waitUntil: "domcontentloaded" });
-  console.log("got to google ngu");
 
   // consent form handling click "Accept all"
   await page.waitForSelector("#L2AGLb");
@@ -65,11 +64,8 @@ async function run() {
   //   loadMoreVisible = await isElementVisible(page, rejectAllButton);
   // }
 
-  await page.screenshot({ path: "ooter.png" });
-
   // await page.waitForSelector('textarea[name="q"]', { visible: true });
   await page.type('textarea[name="q"]', searchQuery);
-  console.log("got to google type");
 
   await page.screenshot({ path: "ooter1.png" });
 
@@ -77,11 +73,7 @@ async function run() {
     page.waitForNavigation({ waitUntil: "domcontentloaded" }),
     page.keyboard.press("Enter"),
   ]);
-  // await page.waitForNavigation({ waitUntil: "domcontentloaded" });
-  // await page.keyboard.press("Enter");
-  console.log("got here 1");
-  // await page.waitForSelector(".rgnuSb.tZPcob");
-  console.log("got here 2");
+
   await page.screenshot({ path: "ooter2.png" });
 
   await page.waitForSelector(".CHn7Qb.pYouzb");
@@ -95,17 +87,12 @@ async function run() {
   //   loadMoreVisible = await isElementVisible(page, moreBusinessesGoogleLink);
   // }
 
-  console.log(moreBusinessesGoogleLink);
   await page.goto(moreBusinessesGoogleLink);
-
-  await page.screenshot({ path: "ooter3.png" });
 
   //clicking each business name to get each business detail section
   // const businessDetailLink = page.evaluate(() => {
   //   return document.querySelector(".rgnuSb.xYjf2e");
   // });
-
-  console.log("got here 3");
 
   //wait for all the business listings to load
   await page.waitForSelector("div[data-profile-url-path]");
@@ -126,31 +113,35 @@ async function run() {
   //   );
   // });
 
-  console.log("businessLinks: ", businessLinks);
-
   const businessData = [];
 
   for (let businessLink of businessLinks) {
     const businessPage = `https://www.google.com${businessLink}`;
 
-    console.log("BUSINESS_PAGE: ", businessPage);
-
     await page.goto(businessPage, { waitUntil: "domcontentloaded" });
 
-    await page.screenshot({ path: "ooter4.png" });
-
     const businessDataItem = await page.evaluate(() => {
-      page.waitForSelector(".rgnuSb.tZPcob");
+      // page.waitForSelector(".rgnuSb.tZPcob");
       const name = document.querySelector(".rgnuSb.tZPcob").innerText;
 
-      page.waitForSelector(".AQrsxc");
+      // page.waitForSelector(".AQrsxc");
       const categories = document.querySelector(".AQrsxc").innerText;
 
-      page.waitForSelector(".eigqqc");
+      // page.waitForSelector(".eigqqc");
       const number = document.querySelector(".eigqqc").innerText;
+
+      const avgRatingElement = document.querySelector(".ZjTWef.QoUabe");
+      const avgRating = avgRatingElement ? avgRatingElement.innerText : "N/A";
+
+      const numOfRatingsElement = document.querySelector(".PN9vWe");
+      const numOfRatings = numOfRatingsElement
+        ? numOfRatingsElement.innerText.slice(1, -1)
+        : "N/A";
 
       return {
         name,
+        avgRating,
+        numOfRatings,
         categories,
         number,
       };
@@ -165,8 +156,11 @@ async function run() {
 
   // businessDataItem {
   //   businessName: "",
+  //   review count/avg: "",
   //   categories: [],
-  //   number: ""
+  //   number: "",
+  //   address: "",
+
   // }
 }
 
