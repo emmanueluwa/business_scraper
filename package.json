@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "@mozilla/readability": "^0.4.4",
+    "jsdom": "^23.0.0",
     "puppeteer": "^21.5.2"
   }
 }

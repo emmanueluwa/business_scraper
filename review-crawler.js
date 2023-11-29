@@ -6,10 +6,12 @@
 // // trustpilot
 // I will keep scraping until I get a lot of data
 
-//sets up headless browser to run routines in browser to automate
+//abstractly scrapes aricle text from webpage
 const { Readability } = require("@mozilla/readability");
 const { JSDOM } = require("jsdom");
+//sets up headless browser to run routines in browser to automate
 const puppeteer = require("puppeteer");
+const fs = require("fs");
 
 // to avoid rate limiting, act like a real person and add pauses
 // simulating a sleep function
@@ -43,6 +45,23 @@ async function getReviewUrlList(page) {
   });
 }
 
+//TODO: review data should be filtered and cleaned
+async function getReviewText(page) {
+  //wait for reviews to be present
+  await page.waitForSelector(".raw__09f24__T4Ezm");
+
+  const reviews = await page.$$eval(".raw__09f24__T4Ezm", (reviewElements) => {
+    return reviewElements.map((el) => {
+      //get text for each review
+      const reviewText = el.textContent.trim();
+      return { reviewText };
+    });
+  });
+
+  console.log("Reviews:", reviews);
+  return reviews;
+}
+
 async function run() {
   const [browser, page] = await setupBrowser();
 
@@ -54,9 +73,17 @@ async function run() {
   let skipCursor = 0;
   let hasNewReviews = [];
 
+  const pageLimit = 20;
+
   let reviewsToScrape = [];
 
   while (hasNewReviews) {
+    //controlling page limit
+    if (reviewsToScrape.length > pageLimit) {
+      break;
+    }
+
+    console.log("Going to new page");
     await page.goto(
       `https://www.yelp.co.uk/search?find_desc=vet&find_loc=London&start=${skipCursor}`
     );
@@ -67,11 +94,13 @@ async function run() {
       newUrls = await getReviewUrlList(page);
     } catch (e) {
       console.log(e);
+      break;
     }
 
     skipCursor += 10;
     if (newUrls.length === 0) {
       //ending loop here, assuming when "skipCursor" reaches end newUrls is empty
+      //the natural end of the pagination
       hasNewReviews = false;
     } else {
       reviewsToScrape = reviewsToScrape.concat(newUrls);
@@ -82,11 +111,23 @@ async function run() {
     await sleep(1000);
   }
 
+  const corpus = [];
+
   for (let reviewUrl of reviewsToScrape) {
     //scrape the review info
+    await page.goto(reviewUrl);
+
+    const reviewText = await getReviewText(page);
+
+    corpus.push({
+      reviewText: reviewText,
+      url: reviewUrl,
+    });
+
+    await sleep(1000);
   }
+
+  fs.writeFileSync("./review_corpus.json", JSON.stringify(corpus), "utf-8");
 }
 
 run();
-
-// "https://www.yelp.co.uk/biz/canonbury-veterinary-practice-london?osq=vet&start=10"
