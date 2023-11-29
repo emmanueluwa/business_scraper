@@ -7,7 +7,7 @@
 const fs = require("fs");
 const puppeteer = require("puppeteer");
 
-// to avoid rate limiting, act liek a real person and add pauses
+// to avoid rate limiting, act like a real person and add pauses
 // simulating a sleep function
 const sleep = (miliseconds) => {
   return new Promise((resolve) => {
