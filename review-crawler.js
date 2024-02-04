@@ -117,7 +117,12 @@ async function run() {
     //scrape the review info
     await page.goto(reviewUrl);
 
-    const reviewText = await getReviewText(page);
+    const reviewTextArray = await getReviewText(page);
+
+    //combining array of review texts into single string
+    const reviewText = reviewTextArray
+      .map((review) => review.reviewText)
+      .join("\n");
 
     corpus.push({
       reviewText: reviewText,
